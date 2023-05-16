@@ -1,0 +1,23 @@
+WebAssembly-compiled version of CPython must be provided in a file called `cpython.wasm` by default.
+Details at: https://faasm.readthedocs.io/en/latest/source/python.html#quick-start
+
+Step-by-step instructions:
+```
+# 0. Setup Faasm and cd into faasm directory.
+cd faasm/
+
+# 1. Open Python CLI.
+./bin/cli.sh python
+
+# 2. Compile the CPython runtime into WebAssembly. The compiled WASM file should be at:
+#    `/usr/local/faasm/wasm/python/py_func/function.wasm`
+inv cpython.func
+
+# 3. In another shell session (with Faasm env), figure out the container name of the Python CLI.
+#    Usually it should be called `faasm-dev-python-1`.
+./bin/workon.sh
+docker compose ps -a
+
+# 4. Copy the file from Python CLI container to the repository.
+docker cp faasm-dev-python-1:/usr/local/faasm/wasm/python/py_func/function.wasm ./data/cpython.wasm
+```
