@@ -4,12 +4,15 @@ def echo():
     input_len = get_input_len()
     if input_len == 0:
         write_output("Nothing to echo")
-        return 0
+        return
 
     input_data: bytes = read_input(input_len)
     input_data_str = input_data.decode("utf-8")
 
-    write_output(f"Input bytes: {input_data!r}")
-    write_output(f"Input string: {input_data_str!r}")
+    print(f"Input string: {input_data_str!r}")
+    write_output(input_data_str.encode(encoding="utf-8"))
 
+
+def faasm_main() -> int:
+    echo()
     return 0
