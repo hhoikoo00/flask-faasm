@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 
 from lib.constants import CPYTHON_WASM_FILE
-from lib.faasm import invoke_py_func, upload_func, upload_py_func
+from lib.faasm import encode_input, invoke_py_func, upload_func, upload_py_func
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ def test_upload_invoke_simple_func(fn_file: Path) -> None:
     # Sleep for 2 seconds for upload to be propagated.
     sleep(2)
 
-    # Function invocation arguments.
-    input_data = "Hello Faasm"
+    # Encode the function invocation arguments.
+    input_data = encode_input("Hello Faasm")
 
     # Invoke uploaded function.
     invoke_py_func(fn_name, input_data=input_data)

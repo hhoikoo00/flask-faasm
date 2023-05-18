@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from base64 import b64encode
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,11 @@ def upload_py_func(source: str, fn_name: str | None = None) -> str:
     logger.info(f"Upload response: {res.text!r}")
 
     return fn_name
+
+
+def encode_input(input_data: str) -> str:
+    # The input data field must be base64 encoded.
+    return b64encode(input_data.encode(encoding="utf-8")).decode(encoding="utf-8")
 
 
 def invoke_py_func(fn_name: str, input_data: Any | None = None) -> Any:
