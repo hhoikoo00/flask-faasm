@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from faasmtools.endpoints import get_faasm_invoke_host_port, get_faasm_upload_host_port
+from faasmtools.endpoints import get_faasm_invoke_host_port, get_faasm_upload_host_port  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
-UPLOAD_HOST, UPLOAD_PORT = get_faasm_upload_host_port()
-INVOKE_HOST, INVOKE_PORT = get_faasm_invoke_host_port()
+UPLOAD_HOST, UPLOAD_PORT = get_faasm_upload_host_port()  # type: ignore
+INVOKE_HOST, INVOKE_PORT = get_faasm_invoke_host_port()  # type: ignore
 FAASM_OUTPUT_TEXT_SEP = "Python call succeeded\n\n"
 
 
