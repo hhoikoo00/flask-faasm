@@ -45,7 +45,7 @@ def upload_py_func(source: str, fn_name: str | None = None) -> str:
     res.raise_for_status()
 
     logger.info("Upload successful!")
-    logger.info(f"Upload response: {res.text!r}")
+    logger.debug(f"Upload response: {res.text!r}")
 
     return fn_name
 
@@ -83,7 +83,7 @@ def invoke_py_func(fn_name: str, input_data: Any | None = None) -> Any:
     res.raise_for_status()
 
     logger.info("Invoke successful!")
-    logger.info(f"Invoke Response [{res.status_code}]: {res.text!r}")
+    logger.debug(f"Invoke Response [{res.status_code}]: {res.text!r}")
 
     # Extract the output produced by `write_output()` function.
     output = extract_output(res.text)
