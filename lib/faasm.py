@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 UPLOAD_HOST, UPLOAD_PORT = get_faasm_upload_host_port()
 INVOKE_HOST, INVOKE_PORT = get_faasm_invoke_host_port()
+FAASM_OUTPUT_TEXT_SEP = "Python call succeeded\n\n"
 
 
 def upload_func(wasm_file_path: Path, user: str, fn_name: str) -> None:
@@ -54,6 +55,11 @@ def encode_input(input_data: str) -> str:
     return b64encode(input_data.encode(encoding="utf-8")).decode(encoding="utf-8")
 
 
+def extract_output(result_text: str) -> str:
+    _, output = result_text.split(FAASM_OUTPUT_TEXT_SEP, maxsplit=1)
+    return output
+
+
 def invoke_py_func(fn_name: str, input_data: Any | None = None) -> Any:
     # Prepare invoke data. Include input data if input data provided.
     invoke_data = {
@@ -79,5 +85,7 @@ def invoke_py_func(fn_name: str, input_data: Any | None = None) -> Any:
     logger.info("Invoke successful!")
     logger.info(f"Invoke Response [{res.status_code}]: {res.text!r}")
 
-    # TODO: Return result?
-    return res.text
+    # Extract the output produced by `write_output()` function.
+    output = extract_output(res.text)
+
+    return output
