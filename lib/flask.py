@@ -62,6 +62,7 @@ def get_entry_view_func(fn_name: str) -> Callable[..., Any]:
             "form": request.form.to_dict(),
             "data_str": request.get_data(as_text=True),
             "is_json": request.is_json,
+            "method": request.method,
         }
 
         # Invoke function on Faasm.

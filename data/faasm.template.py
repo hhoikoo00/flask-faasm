@@ -26,12 +26,7 @@ def faasm_main() -> int:
     # Initialize input request object from values of input.
     request_data = input_data["request_data"]
     global request
-    request = Request(
-        args=request_data["args"],
-        form=request_data["form"],
-        data_str=request_data["data_str"],
-        is_json=request_data["is_json"],
-    )
+    request = Request(**request_data)
 
     # Call the provided function.
     output = {__function_name}(*args, **kwargs)
