@@ -100,8 +100,7 @@ def process_flask_app(app: Flask) -> None:
 
         # Get new entry view function that invokes the function in Faasm instead.
         # Call `update_wrapper()` to copy over attributes of `view_func` (equivalent to `@wraps()` decorator).
-        entry_view_func = get_entry_view_func(view_func_name)
-        entry_view_func = update_wrapper(entry_view_func, view_func)
+        entry_view_func = update_wrapper(get_entry_view_func(view_func_name), view_func)
 
         # Replace the function in `app.view_func` with the new entry view function.
         app.view_functions[endpoint] = entry_view_func  # type: ignore
