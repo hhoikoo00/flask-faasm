@@ -1,9 +1,9 @@
 import json
-from typing import Any
+import typing as t
 
 
 class Request:
-    def __init__(self, args: dict[str, str], form: dict[str, str], data_str: str, is_json: bool) -> None:
+    def __init__(self, args: t.Dict[str, str], form: t.Dict[str, str], data_str: str, is_json: bool) -> None:
         """
         Arguments:
             * `args`: URL parameter arguments (after question mark on URL).
@@ -19,23 +19,23 @@ class Request:
         self._is_json = is_json
 
     @property
-    def json(self) -> Any | None:
+    def json(self) -> t.Optional[t.Any]:
         return self.get_json()
 
     @property
-    def args(self) -> dict[str, str]:
+    def args(self) -> t.Dict[str, str]:
         return self._args
 
     @property
-    def form(self) -> dict[str, str]:
+    def form(self) -> t.Dict[str, str]:
         return self._form
 
-    def get_data(self, as_text: bool = False) -> bytes | str:
+    def get_data(self, as_text: bool = False) -> t.Union[bytes, str]:
         if as_text:
             return self._data_str
         return self._data_str.encode(encoding="utf-8")
 
-    def get_json(self) -> Any | None:
+    def get_json(self) -> t.Optional[t.Any]:
         if not self._is_json:
             return None
         return json.loads(self._data_str)

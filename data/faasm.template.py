@@ -1,4 +1,5 @@
 import json
+import typing as t
 
 from pyfaasm.core import get_input_len, read_input, write_output
 
