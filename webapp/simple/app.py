@@ -1,3 +1,6 @@
+from http.client import HTTPResponse
+from urllib.request import Request, urlopen
+
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -40,9 +43,6 @@ def make_http_request_to_echo():
     Demo showing how HTTP request should be made in a Faasm environment.
     User must ensure that the echo webapp must be hosted (at `./webapp/echo/app.py`).
     """
-
-    from http.client import HTTPResponse
-    from urllib.request import Request, urlopen
 
     ECHO_HOST = "http://127.0.0.1"
     ECHO_PORT = 1500

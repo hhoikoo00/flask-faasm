@@ -1,3 +1,4 @@
+import ast
 import inspect
 import json
 import logging
@@ -9,12 +10,14 @@ from flask import Flask, request
 
 from lib.constants import FAASM_FUNC_TEMPLATE_FILE
 from lib.faasm import invoke_py_func, upload_py_func
+from lib.imports import Import, ImportFrom, ImportVisitor
 from lib.request import Request
 
 logger = logging.getLogger(__name__)
 
 
 FAASM_FUNC_TEMPLATE = FAASM_FUNC_TEMPLATE_FILE.read_text(encoding="utf-8")
+FLASK_MODULE_NAME = "flask"
 
 
 def view_funcs_iter(app: Flask) -> Generator[tuple[str, Callable[..., Any]], None, None]:
@@ -28,24 +31,61 @@ def view_funcs_iter(app: Flask) -> Generator[tuple[str, Callable[..., Any]], Non
         yield endpoint, view_func
 
 
+def get_view_func_source(view_func: Callable[..., Any]) -> str:
+    view_func_lines, _ = inspect.getsourcelines(view_func)
+    view_func_lines_no_decorators = dropwhile(lambda line: line.startswith("@"), view_func_lines)
+    view_func_source = "".join(view_func_lines_no_decorators)
+    return view_func_source
+
+
+def is_flask_import(import_obj: Import | ImportFrom) -> bool:
+    if isinstance(import_obj, Import):
+        return import_obj.name.name == FLASK_MODULE_NAME
+
+    assert isinstance(import_obj, ImportFrom)
+    return FLASK_MODULE_NAME in (import_obj.module, import_obj.subimport.name.name)
+
+
+def get_import_stmts_for(*objs: object) -> list[str]:
+    import_visitor = ImportVisitor()
+
+    for obj in objs:
+        # Get which file the source code of the given object is in.
+        obj_path = inspect.getfile(obj)  # type: ignore
+
+        # Read the source file and fetch all imports.
+        with open(obj_path, "r", encoding="utf-8") as obj_file:
+            import_visitor.visit(ast.parse(obj_file.read()))
+
+    # Exclude Flask imports.
+    imports_no_flask = (import_obj for import_obj in import_visitor.imports if not is_flask_import(import_obj))
+
+    # Convert the Import objects into import statement strings.
+    import_stmts = list(sorted(str(import_obj) for import_obj in imports_no_flask))
+
+    return import_stmts
+
+
 def package_view_func_faasm(view_func: Callable[..., Any]) -> str:
     """Format the given `view_func` to be compatible with execution in Faasm."""
 
     # Get function name and source code for the given `view_func`.
     view_func_name = view_func.__name__
+    view_func_source = get_view_func_source(view_func)
 
-    view_func_lines, _ = inspect.getsourcelines(view_func)
-    view_func_lines_no_decorators = dropwhile(lambda line: line.startswith("@"), view_func_lines)
-    view_func_source = "".join(view_func_lines_no_decorators)
-
-    # Read source of Request class's definition.
+    # Get source code of Request class's definition.
     request_cls_source = inspect.getsource(Request)
+
+    # Get all imports used in the view function's source and Request object.
+    import_stmts = get_import_stmts_for(view_func, Request)
+    imports = "\n".join(import_stmts)
 
     # Add the source code, function name, and Request class's source to the template file for uploading to Faasm.
     view_func_faasm = FAASM_FUNC_TEMPLATE.format(
+        __imports=imports,
+        __request_def=request_cls_source,
         __function=view_func_source,
         __function_name=view_func_name,
-        __request_def=request_cls_source,
     )
 
     return view_func_faasm
