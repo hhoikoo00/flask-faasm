@@ -3,6 +3,7 @@ import logging
 
 from flask import Flask
 
+from lib.faasm import upload_cpython_runtime
 from lib.flask import process_flask_app
 from webapp import simple_app
 
@@ -12,6 +13,8 @@ APP_OBJECT_MAP = {"simple_app": simple_app}
 
 
 def demo_flask_faasm(app: Flask, host: str, port: int) -> None:
+    upload_cpython_runtime()
+
     process_flask_app(app)
 
     # Launch the modified webapp.
