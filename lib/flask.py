@@ -4,6 +4,7 @@ import json
 import logging
 from functools import update_wrapper
 from itertools import dropwhile
+from pathlib import Path
 from typing import Any, Callable, Generator
 
 from flask import Flask, request
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 FAASM_FUNC_TEMPLATE = FAASM_FUNC_TEMPLATE_FILE.read_text(encoding="utf-8")
 FLASK_MODULE_NAME = "flask"
+FUNC_LIB_FOLDER = "lib"
 
 
 def view_funcs_iter(app: Flask) -> Generator[tuple[str, Callable[..., Any]], None, None]:
@@ -66,7 +68,7 @@ def get_import_stmts_for(*objs: object) -> list[str]:
     return import_stmts
 
 
-def package_view_func_faasm(view_func: Callable[..., Any]) -> str:
+def package_view_func_faasm(view_func: Callable[..., Any], use_lib: bool = False) -> str:
     """Format the given `view_func` to be compatible with execution in Faasm."""
 
     # Get function name and source code for the given `view_func`.
@@ -80,10 +82,24 @@ def package_view_func_faasm(view_func: Callable[..., Any]) -> str:
     import_stmts = get_import_stmts_for(view_func, Request)
     imports = "\n".join(import_stmts)
 
-    # Add the source code, function name, and Request class's source to the template file for uploading to Faasm.
+    # If library code needs to be used, obtain the source of the library code.
+    # Library code should be stored in `<app-dir>/FUNC_LIB_FOLDER/<func-name>.py`
+    lib_source = ""
+    if use_lib:
+        lib_path = Path(inspect.getfile(view_func)).parent / FUNC_LIB_FOLDER / f"{view_func_name}.py"
+        try:
+            with open(lib_path, "r", encoding="utf-8") as lib_file:
+                lib_source = lib_file.read()
+        except FileNotFoundError as exc:
+            logger.error(f"Library code for view function {view_func_name!r} not found!")
+            logger.error(f"It should be found at location {lib_path!r}.")
+            raise exc
+
+    # Package all information above into the template file for uploading to Faasm.
     view_func_faasm = FAASM_FUNC_TEMPLATE.format(
         __imports=imports,
         __request_def=request_cls_source,
+        __lib_source=lib_source,
         __function=view_func_source,
         __function_name=view_func_name,
     )

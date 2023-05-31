@@ -11,6 +11,9 @@ from pyfaasm.core import get_input_len, read_input, write_output
 request = None
 
 
+{__lib_source}
+
+
 {__function}
 
 
