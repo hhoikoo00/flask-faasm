@@ -30,12 +30,12 @@ if USE_FAASM:
 # Set apps that could be processed into Faasm apps.
 # This is used mainly to disable unnecessary processing if the app doesn't need to be procees
 ENABLED_APPS = {
-    simple_app,
-    pyperformance_app,
+    simple_app: False,
+    pyperformance_app: True,
 }
 
 
 # Process the Flask app if `USE_FAASM` is enabled.
 if USE_FAASM:
-    for app in ENABLED_APPS:
-        process_flask_app(app)
+    for app, use_lib in ENABLED_APPS.items():
+        process_flask_app(app, use_lib)

@@ -137,7 +137,7 @@ def get_entry_view_func(fn_name: str) -> Callable[..., Any]:
     return entry_view_func
 
 
-def process_flask_app(app: Flask) -> None:
+def process_flask_app(app: Flask, use_lib: bool = False) -> None:
     """
     Replace `view_func` in `app` with version that invokes Faasm for the function,
     and upload the function to Faasm.
@@ -147,7 +147,7 @@ def process_flask_app(app: Flask) -> None:
         logger.info(f"Processing view function for {endpoint=}...")
 
         # Package the `view_func` into source executable by Faasm.
-        view_func_faasm_source = package_view_func_faasm(view_func)
+        view_func_faasm_source = package_view_func_faasm(view_func, use_lib)
         logger.debug(f"Packaged view function source: \n{view_func_faasm_source}\n")
 
         # Upload the function to Faasm.
