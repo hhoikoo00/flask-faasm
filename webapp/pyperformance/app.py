@@ -1,9 +1,11 @@
-from flask import Flask, request
+from flask import Flask
+
+from .lib.chaos import run_chaos
 
 app = Flask(__name__)
 
 
-@app.get("/value")
-def value():
-    assert request.method == "GET"
-    return "42"
+@app.post("/bm/chaos")
+def chaos():
+    run_chaos()
+    return "Success"
