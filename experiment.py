@@ -16,7 +16,7 @@ import os
 
 from lib.faasm import upload_cpython_runtime
 from lib.flask import process_flask_app
-from webapp import echo_app, simple_app  # type: ignore
+from webapp import echo_app, pyperformance_app, simple_app  # type: ignore
 
 # Determine if the apps for the experiment should be run with Faasm processing enabled.
 USE_FAASM = "FAASM" in os.environ
@@ -31,6 +31,7 @@ if USE_FAASM:
 # This is used mainly to disable unnecessary processing if the app doesn't need to be procees
 ENABLED_APPS = {
     simple_app,
+    pyperformance_app,
 }
 
 
