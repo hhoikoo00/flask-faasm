@@ -224,7 +224,7 @@ class Chaosgame(object):
             write_ppm(im, filename)
 
 
-def run_chaos():
+def bench_chaos():
     splines = [
         Spline(
             [
