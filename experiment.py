@@ -28,7 +28,7 @@ if USE_FAASM:
 
 
 # Set apps that could be processed into Faasm apps.
-# This is used mainly to disable unnecessary processing if the app doesn't need to be procees
+# This is used mainly to disable unnecessary processing if the app doesn't need to be processed.
 ENABLED_APPS = {
     simple_app: False,
     pyperformance_app: True,
