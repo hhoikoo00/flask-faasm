@@ -1,6 +1,5 @@
-# coding: utf-8
 """
-Calculating some of the digits of π.
+Calculating some of the digits of pi.
 
 This benchmark stresses big integer arithmetic.
 
