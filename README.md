@@ -1,3 +1,1 @@
-# Flask-Faasm (Tentative)
-
-TODO: Write README.
+# Flask-Faasm
