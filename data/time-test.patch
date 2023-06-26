@@ -1,0 +1,133 @@
+diff --git a/data/faasm.template.py b/data/faasm.template.py
+index 260ad80..a8a2987 100644
+--- a/data/faasm.template.py
++++ b/data/faasm.template.py
+@@ -1,3 +1,7 @@
++from time import perf_counter
++
++t_script_start = perf_counter()
++
+ import json
+ 
+ from pyfaasm.core import get_input_len, read_input, write_output
+@@ -19,11 +23,14 @@ request = None
+ 
+ def faasm_main() -> int:
+     # Read input (as bytes) and parse as JSON.
++    t_input_ser_start = perf_counter()
+     input_len = get_input_len()
+     assert input_len > 0
+     input_data_json = read_input(input_len)
+     input_data = json.loads(input_data_json)
++    t_input_ser = perf_counter() - t_input_ser_start
+ 
++    t_arg_construct_start = perf_counter()
+     # Obtain the function args and kwargs from the input data.
+     args = input_data["func_args"]["args"]
+     kwargs = input_data["func_args"]["kwargs"]
+@@ -32,15 +39,24 @@ def faasm_main() -> int:
+     request_data = input_data["request_data"]
+     global request
+     request = Request(**request_data)
++    t_arg_construct = perf_counter() - t_arg_construct_start
+ 
+     # Call the provided function.
++    t_call_start = perf_counter()
+     output = {__function_name}(*args, **kwargs)
++    t_call = perf_counter() - t_call_start
+ 
++    t_output_ser_start = perf_counter()
+     # Format the output in JSON.
+     # TODO: Alternatively in some byte format?
+     output_json = json.dumps(output)
++    output_bytes = output_json.encode(encoding="utf-8")
++    t_output_ser = perf_counter() - t_output_ser_start
+ 
+     # Encode the output in bytes and output the function result to Faasm.
+-    write_output(output_json.encode(encoding="utf-8"))
++    output = t_script, t_input_ser, t_arg_construct, t_call, t_output_ser
++    write_output(json.dumps(output).encode(encoding="utf-8"))
+ 
+     return 0
++
++t_script = perf_counter() - t_script_start
+diff --git a/lib/flask.py b/lib/flask.py
+index 2525796..bd23b21 100644
+--- a/lib/flask.py
++++ b/lib/flask.py
+@@ -5,6 +5,7 @@ import logging
+ from functools import update_wrapper
+ from itertools import dropwhile
+ from pathlib import Path
++from time import perf_counter
+ from typing import Any, Callable, Generator
+ 
+ from flask import Flask, request
+@@ -109,6 +110,7 @@ def package_view_func_faasm(view_func: Callable[..., Any], use_lib: bool = False
+ 
+ def get_entry_view_func(fn_name: str) -> Callable[..., Any]:
+     def entry_view_func(*args: Any, **kwargs: Any) -> Any:
++        t_ser_input_start = perf_counter()
+         # Package args and kwargs as JSON-compatible objects.
+         func_args = {"args": args, "kwargs": kwargs}
+ 
+@@ -127,12 +129,15 @@ def get_entry_view_func(fn_name: str) -> Callable[..., Any]:
+             "request_data": request_data,
+         }
+         input_data_json = json.dumps(input_data)
++        t_ser_input = perf_counter() - t_ser_input_start
+         output_json = invoke_py_func(fn_name, input_data=input_data_json)
+ 
++        t_ser_output_start = perf_counter()
+         # Parse the output in JSON and return the result.
+         output = json.loads(output_json)
++        t_ser_output = perf_counter() - t_ser_output_start
+ 
+-        return output
++        return str(tuple((t_ser_input, *output, t_ser_output)))
+ 
+     return entry_view_func
+ 
+diff --git a/run_experiment.py b/run_experiment.py
+index c467406..cf4c3cc 100644
+--- a/run_experiment.py
++++ b/run_experiment.py
+@@ -3,6 +3,7 @@ import asyncio
+ import logging
+ from itertools import count
+ from time import perf_counter
++from typing import Sequence
+ 
+ import aiohttp
+ 
+@@ -12,14 +13,18 @@ DEFAULT_URL_ENDPOINT = "http://localhost:8000"
+ DEFAULT_REQUEST_PER_SECOND = 5
+ 
+ 
+-async def make_request(session: aiohttp.ClientSession, url: str, method: str) -> float:
++async def make_request(session: aiohttp.ClientSession, url: str, method: str) -> tuple[float, str]:
+     start_time = perf_counter()
+     async with session.request(method, url) as response:
+-        await response.text()
++        times = await response.text()
+     end_time = perf_counter()
+ 
+     latency = end_time - start_time
+-    return latency
++    return latency, times
++
++
++def average(latencies: Sequence[float]) -> float:
++    return sum(latencies) / len(latencies)
+ 
+ 
+ async def run_experiment(requests_per_sec: int, url: str, method: str) -> None:
+@@ -27,7 +32,7 @@ async def run_experiment(requests_per_sec: int, url: str, method: str) -> None:
+         for i in count(start=1):
+             logger.info(f"Running Experiment {i}...")
+             tasks = [make_request(session, url, method) for _ in range(requests_per_sec)]
+-            latencies: list[float] = await asyncio.gather(*tasks)
++            latencies: list[tuple[float, str]] = await asyncio.gather(*tasks)
+             logger.info(f"Completed running experiment {i}!")
+             logger.info(latencies)
+ 
